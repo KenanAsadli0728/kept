@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Owed-Value Ledger</title>
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--ink:#1b1d1f;--mute:#6a6f73;--line:#e3e1da;--accent:#0f6b5c;--accent-ink:#fff;--soft:#e6f2ef;--warn:#b4531a;--warnbg:#fbeee3;--bad:#a8261f;--badbg:#fbe7e5;--silent:#5b4bb0;--silentbg:#ece9fa;--c1:#0f6b5c;--c2:#c2562b;--c3:#5b4bb0;--c4:#8a8f94}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#14161a;--card:#1d2025;--ink:#ecebe6;--mute:#9aa0a6;--line:#2c3036;--accent:#3fb59f;--accent-ink:#06211c;--soft:#173630;--warn:#f0a066;--warnbg:#3a2616;--bad:#f0837c;--badbg:#3b1d1b;--silent:#b3a8f5;--silentbg:#2a2547;--c1:#3fb59f;--c2:#f0a066;--c3:#b3a8f5;--c4:#8a8f94}}
+:root[data-theme=dark]{--bg:#14161a;--card:#1d2025;--ink:#ecebe6;--mute:#9aa0a6;--line:#2c3036;--accent:#3fb59f;--accent-ink:#06211c;--soft:#173630;--warn:#f0a066;--warnbg:#3a2616;--bad:#f0837c;--badbg:#3b1d1b;--silent:#b3a8f5;--silentbg:#2a2547;--c1:#3fb59f;--c2:#f0a066;--c3:#b3a8f5;--c4:#8a8f94}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:18px 16px 70px}
+header{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;margin-bottom:16px}
+h1{font-size:19px;margin:0;letter-spacing:-.01em}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}
+.seg button{border:0;background:none;padding:8px 14px;font:inherit;color:var(--mute);cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.chip{display:inline-block;font-size:11.5px;padding:2px 9px;border-radius:99px;font-weight:600}
+.syn{background:var(--warnbg);color:var(--warn)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+.grid{display:grid;gap:14px}.g2{grid-template-columns:1.15fr .85fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}.ge{grid-template-columns:1fr 1fr}
+@media(max-width:820px){.g2,.g3,.g4,.ge{grid-template-columns:1fr 1fr}}
+@media(max-width:540px){.g2,.g3,.g4,.ge{grid-template-columns:1fr}}
+.hero{font-size:52px;font-weight:750;letter-spacing:-.035em;color:var(--accent);line-height:1.05}
+h2{font-size:15px;margin:0 0 8px}.mute{color:var(--mute)}.small{font-size:13px}.tiny{font-size:12px}
+.kpi b{display:block;font-size:24px;letter-spacing:-.02em}.kpi span{color:var(--mute);font-size:12.5px}
+.iou{display:grid;grid-template-columns:38px 1fr auto;gap:12px;padding:13px 0;border-top:1px solid var(--line);align-items:start}
+.iou:first-of-type{border-top:0}
+.iou.new{animation:pop 1.6s ease-out}
+@keyframes pop{0%{background:var(--soft);transform:translateY(-6px)}100%{background:transparent;transform:none}}
+.ico{width:36px;height:36px;border-radius:10px;background:var(--soft);color:var(--accent);display:grid;place-items:center;font-size:12px;font-weight:700}
+.amt{font-weight:700;font-variant-numeric:tabular-nums;text-align:right}
+.st{font-size:11px;padding:1px 8px;border-radius:99px;font-weight:600;margin-left:6px;vertical-align:1px}
+.st-ok{background:var(--soft);color:var(--accent)}.st-pend{background:var(--warnbg);color:var(--warn)}
+details summary{cursor:pointer;color:var(--mute);font-size:12px;margin-top:3px}
+details ul{margin:4px 0 0;padding-left:18px;font-size:12.5px;color:var(--mute)}
+button.act{font:inherit;background:var(--accent);color:var(--accent-ink);border:0;border-radius:9px;padding:8px 14px;cursor:pointer;font-weight:600}
+button.act:disabled{opacity:.6;cursor:wait}
+button.sec{font:inherit;background:none;color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:6px 11px;cursor:pointer}
+button.bad{color:var(--bad)}
+select,input,textarea{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+textarea{width:100%;font-family:ui-monospace,Consolas,monospace;font-size:12px;min-height:110px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}th,td{text-align:left;padding:6px 6px;border-top:1px solid var(--line);font-variant-numeric:tabular-nums;vertical-align:top}th{color:var(--mute);font-weight:500;border-top:0}
+.tabs{display:flex;gap:2px;flex-wrap:wrap;border-bottom:1px solid var(--line);margin-bottom:16px}
+.tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:9px 12px;font:inherit;color:var(--mute);cursor:pointer}
+.tabs button[aria-selected=true]{color:var(--ink);border-color:var(--accent);font-weight:600}
+.note{background:var(--warnbg);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:13px}
+.good{color:var(--accent)}.badc{color:var(--bad)}
+svg text{fill:var(--mute);font-size:11px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--mute);margin-top:4px}.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sp{justify-content:space-between}
+canvas{width:100%;height:420px;border:1px solid var(--line);border-radius:10px;background:var(--card);display:block}
+.big-inc{font-size:17px;line-height:1.4}.big-inc b{color:var(--accent)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:13px}.kv dt{color:var(--mute)}.kv dd{margin:0;font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><h1>Owed-Value Ledger</h1><div class="tiny mute">What the brand owes the customer, paid before they ask.</div></div>
+  <div class="row"><span class="chip syn">Synthetic data demo</span>
+    <div class="seg" id="views"><button data-v="cust" aria-pressed="true">Customer</button><button data-v="ops" aria-pressed="false">Ops</button></div>
+    <button class="sec" id="theme">Theme</button></div>
+</header>
+<main id="main"></main>
+</div>
+<script>
+const $=(s,e=document)=>e.querySelector(s), $$=(s,e=document)=>[...e.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const usd=n=>'$'+(+n).toFixed(2), usd0=n=>'$'+Math.round(+n).toLocaleString(), pc=(n,d=1)=>n==null?'n/a':(100*n).toFixed(d)+'%';
+const api=(p,o)=>fetch(p,o).then(async r=>{if(!r.ok)throw new Error((await r.json().catch(()=>({detail:r.statusText}))).detail);return r.json()});
+const post=(p,b)=>api(p,{method:'POST',headers:{'Content-Type':'application/json'},body:b?JSON.stringify(b):undefined});
+const ICON={late_delivery:'⏱',price_protection:'↓$',expiring_points:'★',unused_subscription:'⏸',devaluation_true_up:'⚖',silent_failure:'◇',incident:'⚠'};
+const NAME={late_delivery:'Late delivery',price_protection:'Price protection',expiring_points:'Points kept from expiring',unused_subscription:'Unused add-on paused',devaluation_true_up:'Reward chart true-up',silent_failure:'Likely faulty order',incident:'Operations incident'};
+const S={view:'cust',tab:'overview',cust:1,evCount:0,newIds:new Set(),cq:{q:'',segment:'',filter:'',offset:0},rq:{mode:'cases',contract:'',reason:'',offset:0}};
+
+/* ---------------- tiny SVG charts ---------------- */
+function lineChart(series,{w=460,h=210,xl='',yl='',xfmt=x=>x,yfmt=y=>y.toFixed(1)}={}){
+  const pts=series.flatMap(s=>s.pts), xs=pts.map(p=>p[0]), ys=pts.map(p=>p[1]);
+  let x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(0,...ys),y1=Math.max(0,...ys); if(y1==y0)y1=y0+1;
+  const L=44,R=10,T=8,B=30,X=x=>L+(x-x0)/((x1-x0)||1)*(w-L-R),Y=y=>T+(1-(y-y0)/(y1-y0))*(h-T-B);
+  let g=''; for(let i=0;i<=4;i++){const v=y0+(y1-y0)*i/4;g+=`<line x1="${L}" x2="${w-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${L-5}" y="${Y(v)+3}" text-anchor="end">${yfmt(v)}</text>`}
+  g+=`<line x1="${L}" x2="${w-R}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--mute)" stroke-dasharray="3 3"/>`;
+  [x0,(x0+x1)/2,x1].forEach(v=>g+=`<text x="${X(v)}" y="${h-14}" text-anchor="middle">${xfmt(v)}</text>`);
+  g+=`<text x="${(L+w)/2}" y="${h-1}" text-anchor="middle">${xl}</text>`;
+  const cols=['var(--c1)','var(--c2)','var(--c3)','var(--c4)'];
+  series.forEach((s,i)=>{g+=`<polyline fill="none" stroke="${cols[i%4]}" stroke-width="2" ${s.dash?'stroke-dasharray="5 4"':''} points="${s.pts.map(p=>X(p[0])+','+Y(p[1])).join(' ')}"/>`});
+  return `<svg viewBox="0 0 ${w} ${h}" width="100%" role="img">${g}</svg><div class="legend">${series.map((s,i)=>`<span><i style="background:${cols[i%4]}"></i>${s.name}</span>`).join('')}</div>`;
+}
+function barChart(items,{w=460,h=190,yfmt=y=>pc(y,0),min=null}={}){
+  const vals=items.flatMap(i=>[i.v,(i.lo??i.v),(i.hi??i.v)]); let y0=min??Math.min(0,...vals),y1=Math.max(...vals); if(y1==y0)y1=y0+1;
+  const L=44,R=10,T=10,B=34,Y=y=>T+(1-(y-y0)/(y1-y0))*(h-T-B),bw=(w-L-R)/items.length;
+  let g=''; for(let i=0;i<=3;i++){const v=y0+(y1-y0)*i/3;g+=`<line x1="${L}" x2="${w-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${L-5}" y="${Y(v)+3}" text-anchor="end">${yfmt(v)}</text>`}
+  items.forEach((it,i)=>{const x=L+i*bw+bw*.2,ww=bw*.6,cols=['var(--c1)','var(--c4)','var(--c3)','var(--c2)'];
+    g+=`<rect x="${x}" y="${Math.min(Y(it.v),Y(0>y0?0:y0))}" width="${ww}" height="${Math.abs(Y(it.v)-Y(0>y0?0:y0))}" rx="3" fill="${it.c||cols[i%4]}"/>`;
+    if(it.lo!=null)g+=`<line x1="${x+ww/2}" x2="${x+ww/2}" y1="${Y(it.lo)}" y2="${Y(it.hi)}" stroke="var(--ink)"/>`;
+    g+=`<text x="${x+ww/2}" y="${h-18}" text-anchor="middle">${it.l}</text><text x="${x+ww/2}" y="${Y(it.v)-4}" text-anchor="middle" style="fill:var(--ink)">${yfmt(it.v)}</text>`});
+  return `<svg viewBox="0 0 ${w} ${h}" width="100%" role="img">${g}</svg>`;
+}
+
+/* ---------------- Customer view ---------------- */
+function entryHTML(e){
+  const pend=e.pending, cls=e.id&&S.newIds.has(e.id)?' new':'';
+  const amount=e.currency_or_points==='POINTS'?`${Math.round(e.amount).toLocaleString()} pts<div class="tiny mute">${usd(e.value_usd)} value</div>`:'+'+usd(e.amount);
+  const note=e.settlement_mode==='explicit'?`<div class="small">${esc(e.note)}</div>`:`<div class="small mute">Credit applied to your account.</div>`;
+  return `<div class="iou${cls}"><div class="ico">${ICON[e.contract_type]||'•'}</div><div>
+    <div><b>${NAME[e.contract_type]||e.contract_type}</b><span class="st ${pend?'st-pend':'st-ok'}">${pend?'Pending':'Settled'}</span></div>${note}
+    <details><summary>Why this entry</summary><ul>${(e.reasons||[]).map(r=>`<li>${esc(r)}</li>`).join('')}</ul></details></div>
+    <div class="amt">${amount}</div></div>`;
+}
+async function viewCust(){
+  const [L,sm,list0]=await Promise.all([api(`/customers/${S.cust}/ledger`),api(`/customers/${S.cust}/summary`),api('/customers?'+new URLSearchParams({...S.cq,limit:12}))]);
+  if(!list0||Array.isArray(list0)||list0.total===undefined)throw new Error('The server is running an OLD version of the API. Stop it and start it again (python run.py)');
+  const list=list0;
+  const tl=[...L.entries].sort((a,b)=>a.event_at<b.event_at?1:-1);
+  $('#main').innerHTML=`<div class="grid g2">
+   <div class="card"><h2>${esc(L.customer.name)} · what we owe you</h2>
+    <div class="small mute" style="margin-bottom:6px">Customer #${L.customer.id} · ${esc(L.customer.segment)}</div>
+    <div class="hero" id="hero">${usd(sm.we_owe_you_total)}</div>
+    <div class="small mute">returned automatically · ${sm.settled_items} settled${sm.pending_items?` · ${sm.pending_items} pending`:''} · ${sm.contacts_needed} contacts needed</div>
+    <div style="margin-top:10px" id="list">${L.entries.length?L.entries.map(entryHTML).join(''):'<p class="mute">Nothing owed. We checked every promise we made you.</p>'}</div></div>
+   <div class="grid">
+    <div class="card"><h2>Find a customer <span class="mute small">(${list.total.toLocaleString()} match)</span></h2>
+      <div class="row"><input id="cq" placeholder="ID or name, e.g. 3149" value="${esc(S.cq.q)}" style="flex:1;min-width:130px">
+        <select id="cseg"><option value="">all segments</option>${['new','regular','vip'].map(x=>`<option ${S.cq.segment===x?'selected':''}>${x}</option>`).join('')}</select>
+        <select id="cfil">${[['','everyone'],['with_entries','has credits'],['review','held for review'],['holdout','holdout arm'],['flagged','flagged by abuse guard'],['no_entries','nothing owed']].map(([v,l])=>`<option value="${v}" ${S.cq.filter===v?'selected':''}>${l}</option>`).join('')}</select>
+        <button class="sec" id="crand">Random</button></div>
+      <div style="margin-top:8px">${list.items.map(c=>`<div class="row sp" data-c="${c.id}" style="padding:6px 8px;border-radius:8px;cursor:pointer;${c.id==S.cust?'background:var(--soft)':''}"><span>${esc(c.name)} <span class="tiny mute">#${c.id} · ${c.segment}</span></span><span class="small">${c.entries?usd(c.returned)+' <span class="tiny mute">('+c.entries+')</span>':'<span class="mute">nothing owed</span>'}${c.held?' <span class="st st-pend">review</span>':''}${c.holdout?' <span class="st syn">holdout</span>':''}</span></div>`).join('')||'<span class="mute small">No customers match.</span>'}</div>
+      <div class="row sp" style="margin-top:6px"><button class="sec" id="cprev" ${S.cq.offset<=0?'disabled':''}>← Prev</button><span class="tiny mute">${list.total?S.cq.offset+1:0}–${Math.min(list.total,S.cq.offset+list.items.length)} of ${list.total.toLocaleString()}</span><button class="sec" id="cnext" ${S.cq.offset+12>=list.total?'disabled':''}>Next →</button></div></div>
+    <div class="card"><h2>Simulate a new event</h2><div class="small mute">Injects an order into the live database, runs detection and shows the credit arriving. No claim, no contact.</div>
+      <div class="row" style="margin-top:10px"><button class="act" id="ev">Simulate new event</button><span class="small mute" id="evs"></span></div></div>
+    <div class="card"><h2>Timeline</h2>${tl.length?tl.map(e=>`<div class="small" style="padding:4px 0;border-top:1px solid var(--line)"><span class="mute">${esc(e.event_at.slice(0,16))}</span> · ${NAME[e.contract_type]||e.contract_type} <span class="amt" style="float:right">${e.currency_or_points==='POINTS'?Math.round(e.amount)+' pts':usd(e.amount)}</span></div>`).join(''):'<span class="mute small">No events.</span>'}</div>
+    <div class="card small mute"><b style="color:var(--ink)">How credits are shown.</b> When you noticed a problem you get a short factual note. When you probably did not, the credit simply appears. No apologies, no promises: value, not words.</div>
+   </div></div>`;
+  const reload=()=>{S.cq.offset=0;viewCust()};
+  let tq;$('#cq').oninput=e=>{clearTimeout(tq);tq=setTimeout(()=>{S.cq.q=e.target.value;reload();setTimeout(()=>{const i=$('#cq');i.focus();i.setSelectionRange(i.value.length,i.value.length)},50)},350)};
+  $('#cseg').onchange=e=>{S.cq.segment=e.target.value;reload()};$('#cfil').onchange=e=>{S.cq.filter=e.target.value;reload()};
+  $('#cprev').onclick=()=>{S.cq.offset=Math.max(0,S.cq.offset-12);viewCust()};$('#cnext').onclick=()=>{S.cq.offset+=12;viewCust()};
+  $('#crand').onclick=async()=>{const r=await api('/customers?'+new URLSearchParams({...S.cq,limit:1,offset:Math.floor(Math.random()*list.total)}));if(r.items[0]){S.cust=r.items[0].id;S.newIds.clear();viewCust()}};
+  $$('[data-c]').forEach(el=>el.onclick=()=>{S.cust=+el.dataset.c;S.newIds.clear();viewCust()});
+  $('#ev').onclick=async()=>{const b=$('#ev'),st=$('#evs');b.disabled=true;st.textContent='Detecting…';
+    const kind=S.evCount++%2===0?'late_order':'price_drop';
+    try{await new Promise(r=>setTimeout(r,700));const r=await post('/simulate/event',{customer_id:S.cust,kind});
+      r.new_entries.forEach(e=>S.newIds.add(e.id));st.textContent=r.new_entries.length?`${r.new_entries.length} new credit${r.new_entries.length>1?'s':''} settled`:'Nothing owed for that event';await viewCust();}
+    catch(e){st.textContent='Error: '+e.message;b.disabled=false}};
+}
+
+/* ---------------- Ops ---------------- */
+const TABS=[['overview','Overview'],['review','Review queue'],['graph','Abuse graph'],['exp','Experiment'],['inc','Incidents'],['contracts','Contracts'],['olist','Real: Olist'],['dunn','Real: Grocery'],['twcs','Real: Support'],['models','Models']];
+async function viewOps(){
+  $('#main').innerHTML=`<div class="tabs" id="tabs">${TABS.map(([k,l])=>`<button data-t="${k}" aria-selected="${S.tab===k}">${l}</button>`).join('')}</div><div id="pane"></div>`;
+  $('#tabs').onclick=e=>{if(e.target.dataset.t){S.tab=e.target.dataset.t;viewOps()}};
+  const pane=$('#pane'); pane.innerHTML='<p class="mute">Loading…</p>';
+  try{await ({overview:tOverview,review:tReview,graph:tGraph,exp:tExp,inc:tInc,contracts:tContracts,olist:tOlist,dunn:tDunn,twcs:tTwcs,models:tModels})[S.tab](pane)}catch(e){pane.innerHTML=`<div class="note">${esc(e.message)}</div>`}
+}
+const kpi=(b,s,cls='')=>`<div class="card kpi"><b class="${cls}">${b}</b><span>${s}</span></div>`;
+async function tOverview(p){
+  const [o,M]=await Promise.all([api('/ops/overview'),api('/ops/metrics')]);
+  const mx=Math.max(1,...o.by_contract.map(c=>c.settled));
+  p.innerHTML=`<div class="grid g4" style="margin-bottom:14px">
+   ${kpi(usd0(o.settled_value_usd),'settled value (value-equivalent)')}${kpi(usd0(o.open_liability_usd),'open liability (review + claim-based holdout)')}
+   ${kpi(pc(o.coverage,0),'auto-settlement coverage (treatment arm)')}${kpi((o.median_time_to_settle_h??0).toFixed(1)+' h','median time to settle (nightly batch)')}</div>
+   <div class="grid ge"><div class="card"><h2>Settled value by contract</h2>${o.by_contract.map(c=>`<div style="margin-bottom:9px"><div class="row sp small"><span>${ICON[c.t]||''} ${NAME[c.t]||c.t} <span class="mute">(${c.n})</span></span><b>${usd0(c.settled)}</b></div><div style="height:8px;border-radius:4px;background:var(--soft)"><div style="height:8px;border-radius:4px;background:var(--accent);width:${c.settled/mx*100}%"></div></div></div>`).join('')}</div>
+   <div class="grid">${kpi(o.review_queue,'entries in the manual review queue','')}${kpi(o.abuse_flags,'customers flagged by the abuse guard')}
+   ${kpi(Math.round(M.simulation.contact_deflection.expected_contacts_avoided),'"where is my refund" contacts avoided (expected)')}
+   ${kpi(Math.round(M.breakage.points_converted/1000)+'k pts','points converted instead of voided ('+M.breakage.members_converted+' members)')}</div></div>
+   <p class="tiny mute" style="margin-top:12px">${esc(M.disclaimer)}</p>`;
+}
+async function tReview(p){
+  const R=S.rq,PG=10,qs=new URLSearchParams({contract:R.contract,reason:R.reason,offset:R.offset,limit:R.mode==='cases'?PG:25});
+  const [sum,data]=await Promise.all([api('/ops/review-summary'),api((R.mode==='cases'?'/ops/review-cases?':'/ops/review-queue?')+qs)]);
+  const tot=sum.by_contract.reduce((a,x)=>a+x.n,0);
+  const chips=sum.by_contract.map(x=>`<span class="chip ${R.contract===x.t?'st-ok':'syn'}" style="cursor:pointer;margin:2px" data-f="${x.t}">${NAME[x.t]||x.t} ${x.n} (${pc(x.n/tot,0)})</span>`).join('');
+  const rows=R.mode==='cases'?data.items.map(c=>`<div class="card" style="margin-bottom:10px" id="k${c.customer_id}"><div class="row sp"><div><b>${esc(c.name)}</b> <span class="tiny mute">#${c.customer_id} · ${c.segment}</span> <span class="st st-pend">${esc(c.reason)}</span> <span class="tiny mute">abuse score ${(+c.abuse_score).toFixed(2)}</span></div>
+     <div class="row"><b>${usd(c.value_usd)}</b> <span class="small mute">${c.entries} entries held</span><button class="sec" data-ca="approve" data-id="${c.customer_id}">Approve all</button><button class="sec bad" data-ca="deny" data-id="${c.customer_id}">Deny all</button></div></div>
+     <div style="margin-top:6px">${Object.entries(c.mix).map(([t,n])=>`<span class="chip syn" style="margin-right:4px">${NAME[t]||t} ×${n}</span>`).join('')}</div>
+     <details><summary>Show the ${c.entries} entries</summary><table>${c.entries_list.map(e=>`<tr><td>${NAME[e.contract_type]||e.contract_type}</td><td>${usd(e.value_usd)}</td><td class="small mute">${esc(e.note)}</td></tr>`).join('')}</table></details></div>`).join('')
+   :`<div class="card"><table><tr><th>Customer</th><th>Contract</th><th>Value</th><th>Reason</th><th>Abuse score</th><th></th></tr>${data.items.map(r=>`<tr id="r${r.id}"><td>${esc(r.name)}</td><td>${NAME[r.contract_type]||r.contract_type}</td><td>${usd(r.value_usd)}</td><td>${esc(r.review_reason)}</td><td>${(+r.abuse_score).toFixed(2)}</td><td class="row"><button class="sec" data-a="approve" data-id="${r.id}">Approve</button><button class="sec bad" data-a="deny" data-id="${r.id}">Deny</button></td></tr>`).join('')}</table></div>`;
+  p.innerHTML=`<div class="grid g4" style="margin-bottom:14px">${kpi(sum.entries,'entries held for a person')}${kpi(sum.customers,'customers (cases)')}${kpi(usd0(sum.value_usd),'value held')}${kpi(sum.by_reason.map(r=>r.r+' '+r.n).join(' · '),'why they were held')}</div>
+   <div class="card" style="margin-bottom:12px"><div class="small mute" style="margin-bottom:4px">What is actually in the queue (click to filter). Sorted by <b>risk</b>, not by value, so no single contract dominates the first page.</div>${chips}
+    <div class="row" style="margin-top:8px"><div class="seg"><button data-m="cases" aria-pressed="${R.mode==='cases'}">By customer</button><button data-m="entries" aria-pressed="${R.mode==='entries'}">By entry</button></div>
+     <select id="rrs"><option value="">all reasons</option>${sum.by_reason.map(r=>`<option ${R.reason===r.r?'selected':''}>${esc(r.r)}</option>`).join('')}</select>
+     ${(R.contract||R.reason)?'<button class="sec" id="rclr">Clear filters</button>':''}<span class="small mute">${data.total.toLocaleString()} ${R.mode==='cases'?'cases':'entries'} match</span></div></div>
+   ${rows||'<div class="card mute">Nothing matches.</div>'}
+   <div class="row sp"><button class="sec" id="rprev" ${R.offset<=0?'disabled':''}>← Prev</button><span class="tiny mute">${data.total?R.offset+1:0}–${Math.min(data.total,R.offset+data.items.length)} of ${data.total}</span><button class="sec" id="rnext" ${R.offset+data.items.length>=data.total?'disabled':''}>Next →</button></div>
+   <p class="tiny mute" style="margin-top:8px">Held for a person: ring members, velocity caps, large payouts. The system never denies automatically.</p>`;
+  const again=()=>viewOps();
+  $$('[data-f]',p).forEach(el=>el.onclick=()=>{R.contract=R.contract===el.dataset.f?'':el.dataset.f;R.offset=0;again()});
+  $$('[data-m]',p).forEach(el=>el.onclick=()=>{R.mode=el.dataset.m;R.offset=0;again()});
+  $('#rrs').onchange=e=>{R.reason=e.target.value;R.offset=0;again()};const cl=$('#rclr');if(cl)cl.onclick=()=>{R.contract='';R.reason='';R.offset=0;again()};
+  $('#rprev').onclick=()=>{R.offset=Math.max(0,R.offset-(R.mode==='cases'?PG:25));again()};$('#rnext').onclick=()=>{R.offset+=(R.mode==='cases'?PG:25);again()};
+  p.onclick=async e=>{const b=e.target.closest('button[data-a],button[data-ca]');if(!b)return;b.disabled=true;
+    try{if(b.dataset.ca){await post(`/ops/review-case/${b.dataset.id}/${b.dataset.ca}`);const k=$('#k'+b.dataset.id);k.style.opacity=.35;k.querySelector('.row.sp .row').innerHTML=`<span class="small mute">${b.dataset.ca}d</span>`}
+      else{await post(`/ops/review/${b.dataset.id}/${b.dataset.a}`);$('#r'+b.dataset.id).style.opacity=.35;$('#r'+b.dataset.id).querySelector('td:last-child').innerHTML=`<span class="small mute">${b.dataset.a}d</span>`}}catch(x){alert(x.message)}};
+}
+async function tGraph(p){
+  const g=await api('/ops/graph');
+  p.innerHTML=`<div class="card"><div class="row sp"><h2>Shared device / address / payment graph</h2><span class="small mute">${g.nodes.length} customers · ${g.rings} flagged ring component(s)</span></div>
+   <div class="legend"><span><i style="background:var(--bad)"></i>flagged (ring / velocity / anomaly)</span><span><i style="background:var(--c4)"></i>benign household or small link</span></div>
+   <canvas id="cv" height="420"></canvas><div class="tiny mute">Node size = claims in the last 30 days. Edges: shared device, address or payment instrument. Drag nodes.</div></div>`;
+  forceGraph($('#cv'),g);
+}
+function forceGraph(cv,g){
+  const dpr=devicePixelRatio||1,W=cv.clientWidth,H=420;cv.width=W*dpr;cv.height=H*dpr;const c=cv.getContext('2d');c.scale(dpr,dpr);
+  const comps=[...new Set(g.nodes.map(n=>n.comp))],N=g.nodes.map((n,i)=>({...n,x:W/2+Math.cos(comps.indexOf(n.comp)*2.1)*W*.28+(Math.random()-.5)*40,y:H/2+Math.sin(comps.indexOf(n.comp)*2.1)*H*.28+(Math.random()-.5)*40,vx:0,vy:0}));
+  const ix=Object.fromEntries(N.map(n=>[n.id,n])),E=g.edges.filter(e=>ix[e.source]&&ix[e.target]);let drag=null,alpha=1;
+  const css=getComputedStyle(document.documentElement);
+  function step(){alpha*=.985;for(const a of N){for(const b of N){if(a===b)continue;let dx=a.x-b.x,dy=a.y-b.y,d=Math.hypot(dx,dy)||1;if(d<90){const f=(90-d)/d*.5;a.vx+=dx*f*.05;a.vy+=dy*f*.05}}
+      a.vx+=(W/2+Math.cos(comps.indexOf(a.comp)*2.1)*W*.28-a.x)*.002;a.vy+=(H/2+Math.sin(comps.indexOf(a.comp)*2.1)*H*.28-a.y)*.002}
+    for(const e of E){const a=ix[e.source],b=ix[e.target],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1,f=(d-45)/d*.04;a.vx+=dx*f;a.vy+=dy*f;b.vx-=dx*f;b.vy-=dy*f}
+    for(const n of N){if(n===drag)continue;n.vx*=.8;n.vy*=.8;n.x=Math.max(10,Math.min(W-10,n.x+n.vx*alpha*3));n.y=Math.max(10,Math.min(H-10,n.y+n.vy*alpha*3))}}
+  function draw(){c.clearRect(0,0,W,H);c.lineWidth=1;c.strokeStyle=css.getPropertyValue('--line').trim()||'#ccc';
+    for(const e of E){const a=ix[e.source],b=ix[e.target];c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);c.stroke()}
+    const bad=css.getPropertyValue('--bad').trim(),gr=css.getPropertyValue('--c4').trim();
+    for(const n of N){c.beginPath();c.arc(n.x,n.y,4+Math.min(8,n.claims*.9),0,7);c.fillStyle=n.flagged?bad:gr;c.globalAlpha=n.flagged?.9:.6;c.fill();c.globalAlpha=1}}
+  (function loop(){step();draw();if(alpha>.02||drag)requestAnimationFrame(loop)})();
+  const pos=e=>{const r=cv.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
+  cv.onpointerdown=e=>{const[x,y]=pos(e);drag=N.find(n=>Math.hypot(n.x-x,n.y-y)<12)||null;if(drag){alpha=.6;cv.setPointerCapture(e.pointerId)}};
+  cv.onpointermove=e=>{if(drag){[drag.x,drag.y]=pos(e);alpha=.4}};cv.onpointerup=()=>{drag=null};
+}
+async function tExp(p){
+  const M=await api('/ops/metrics'),S_=M.simulation,U=M.uplift,O=M.optimizer,G=M.salience_guardrail;
+  const r=S_.retention,n=S_.net_margin;
+  p.innerHTML=`<div class="note" style="margin-bottom:14px">${esc(M.disclaimer)}</div>
+  <div class="grid g4" style="margin-bottom:14px">${kpi(pc(M.coverage.auto_settled_share,0),'auto-settlement coverage')}${kpi(pc(M.coverage.zero_contact_share,0),'settled with zero customer contact')}
+   ${kpi(M.time_to_settle_hours.median.toFixed(1)+' h','median time-to-settle')}${kpi((n.per_customer>=0?'+':'−')+usd(Math.abs(n.per_customer)),'net margin / treated customer (assumed response)',n.per_customer>=0?'good':'badc')}</div>
+  <div class="grid ge">
+   <div class="card"><h2>90-day retention: treatment vs holdout</h2>${barChart([{l:'Holdout',v:r.holdout,lo:r.holdout-1.96*r.observed_se/1.4,hi:r.holdout+1.96*r.observed_se/1.4,c:'var(--c4)'},{l:'Treatment',v:r.treatment},{l:'Oracle uplift',v:r.oracle_uplift,c:'var(--c3)'}],{min:0})}
+     <div class="small mute">Observed uplift ${(r.observed_uplift*100).toFixed(1)} pp ± ${(r.observed_se*196).toFixed(1)} (95%) · oracle (true causal) uplift ${(r.oracle_uplift*100).toFixed(1)} pp. A ${S_.n_holdout}-customer holdout is too small to see a 2 pp effect, which is exactly why the live system keeps a holdout.</div></div>
+   <div class="card"><h2>Qini curve (uplift vs churn-risk targeting)</h2>${lineChart([{name:'Uplift model',pts:U.qini.fractions.map((f,i)=>[f*100,U.qini.uplift_model[i]])},{name:'Churn-risk ranking',pts:U.qini.fractions.map((f,i)=>[f*100,U.qini.churn_risk[i]])},{name:'Random',pts:U.qini.fractions.map((f,i)=>[f*100,U.qini.random[i]]),dash:1}],{xl:'% of customers targeted',yl:'',xfmt:x=>Math.round(x)+'%',yfmt:y=>y.toFixed(0)})}
+     <div class="small mute">Qini coefficient: uplift ${U.qini_coef_uplift.toFixed(2)} vs churn-risk ${U.qini_coef_risk.toFixed(2)}. Calibration slope ${U.calibration_slope.toFixed(2)}${U.calibration_slope<0.1?' → predictions are NOT trusted for sizing yet.':''}</div></div>
+   <div class="card"><h2>Uplift by decile (held-out pilot)</h2>${barChart(U.deciles.map(d=>({l:'D'+d.decile,v:d.uplift,c:d.uplift>=0?'var(--c1)':'var(--c2)'})),{yfmt:y=>(y*100).toFixed(0)+'pp'})}<div class="small mute">Observed treated-minus-control retention by predicted-uplift decile (D1 = highest predicted). Noisy at this pilot size.</div></div>
+   <div class="card"><h2>Budget vs net margin (goodwill top-ups)</h2>${lineChart([{name:'Oracle (true response known)',pts:O.budget_curve.map(c=>[c.budget,c.oracle_true_net_gain])},{name:'Model, raw',pts:O.budget_curve.map(c=>[c.budget,c.model_raw_true_net_gain])},{name:'Model, calibrated',pts:O.budget_curve.map(c=>[c.budget,c.model_calibrated_true_net_gain]),dash:1},{name:'Untargeted',pts:O.budget_curve.map(c=>[c.budget,c.untargeted_true_net_gain])}],{xl:'top-up budget ($)',xfmt:x=>'$'+Math.round(x),yfmt:y=>'$'+Math.round(y)})}
+     <div class="small mute">Contract amounts are always paid; only extra top-ups are optimised. Fairness gate: <b class="${O.fairness.passed?'good':'badc'}">${O.fairness.passed?'PASS':'FAIL'}</b> (max group residual ${usd(O.fairness.max_abs_residual_usd)}).</div></div>
+   <div class="card"><h2>Salience guardrail</h2><table><tr><th>Policy</th><th>Retention uplift</th><th>Backfire group</th><th>Net / customer</th></tr>
+     ${Object.entries(G.policies).map(([k,v])=>`<tr><td>${k==='salience'?'Salience-aware (ours)':'Notify / apologise for everything'}</td><td>${(v.oracle_retention_uplift*100).toFixed(2)} pp</td><td class="${v.backfire_group_uplift<0?'badc':''}">${(v.backfire_group_uplift*100).toFixed(1)} pp</td><td>${usd(v.net_margin_per_customer)}</td></tr>`).join('')}</table>
+     <div class="small mute">Customers with only silent credits: ${(G.silent_only_customers_uplift*100).toFixed(1)} pp uplift (n=${G.n_silent_only}); only explicit: ${(G.explicit_only_customers_uplift*100).toFixed(1)} pp (n=${G.n_explicit_only}). Alerting unaware customers erodes the gain and backfires for sensitive customers.</div></div>
+   <div class="card"><h2>Sensitivity</h2>${lineChart([{name:'Net margin vs late-credit cap',pts:M.sensitivity_late_cap.map(s=>[s.cap,s.net_margin_per_customer])}],{xl:'late-delivery cap ($)',xfmt:x=>'$'+Math.round(x),yfmt:y=>'$'+y.toFixed(1)})}
+     ${lineChart([{name:'Net margin vs response strength',pts:S_.net_margin_vs_response_multiplier.map(s=>[s.multiplier,s.net_per_customer])}],{xl:'multiple of assumed customer response',xfmt:x=>x.toFixed(1)+'×',yfmt:y=>'$'+y.toFixed(1)})}</div>
+   <div class="card"><h2>Economics by contract</h2><table><tr><th>Contract</th><th>Entries</th><th>Brand cost</th><th>Operating net</th><th>Retention benefit</th><th>Full net</th></tr>
+     ${M.by_contract.map(b=>`<tr><td>${NAME[b.contract]||b.contract}</td><td>${b.entries}</td><td>${usd0(b.brand_cost)}</td><td>${usd0(b.operating_net)}</td><td>${usd0(b.retention_benefit)}</td><td class="${b.full_net>=0?'good':'badc'}"><b>${usd0(b.full_net)}</b></td></tr>`).join('')}</table>
+     <div class="small mute">Operating net = contacts avoided × $6 − extra cost vs claim-based handling. Full net adds the retention benefit shared in proportion to credited value. <b>Recommended pilot wedge: ${(M.recommended_contracts||[]).join(", ")||"none"}</b>; the rest need tighter caps or a different design (<code>python run.py --wedge</code> activates only the recommended ones).</div></div>
+   <div class="card"><h2>Can the holdout detect the effect?</h2><table><tr><td>True (oracle) uplift</td><td>${M.power.oracle_uplift_pp.toFixed(1)} pp</td></tr><tr><td>Minimum detectable now (${M.power.holdout_customers_now} holdout customers)</td><td>${M.power.minimum_detectable_uplift_pp.toFixed(1)} pp</td></tr><tr><td>Customers per arm needed (80% power)</td><td>${M.power.customers_needed_per_arm.toLocaleString()}</td></tr><tr><td>Eligible customers needed at 10% / 20% holdout</td><td>${M.power.eligible_customers_needed_at_10pct_holdout.toLocaleString()} / ${M.power.eligible_customers_needed_at_20pct_holdout.toLocaleString()}</td></tr></table><div class="small mute">${esc(M.power.reading)}.</div></div>
+   <div class="card"><h2>Is the uplift model stable? (8 repeated pilots)</h2><table><tr><th>Draw</th><th>Learner</th><th>Qini uplift</th><th>Qini risk</th><th>Slope used</th></tr>${M.uplift_robustness.runs.map(r=>`<tr><td>${r.seed}</td><td>${r.learner}</td><td>${r.qini_uplift.toFixed(1)}</td><td>${r.qini_churn_risk.toFixed(1)}</td><td>${r.calibrated_slope.toFixed(2)}</td></tr>`).join('')}</table><div class="small mute">Beats churn-risk in ${M.uplift_robustness.uplift_beats_risk} of ${M.uplift_robustness.of}. Unstable, so top-ups use the lower confidence bound of the slope and are usually ~0.</div></div>
+   <div class="card"><h2>Abuse &amp; breakage</h2><table><tr><th>Detector</th><th>Precision</th><th>Recall</th></tr>
+     ${['combined','graph_only','anomaly_only','velocity_only'].map(k=>`<tr><td>${k.replace('_',' ')}</td><td>${pc(M.abuse[k].precision,0)}</td><td>${pc(M.abuse[k].recall,0)}</td></tr>`).join('')}</table>
+     <div class="small">Recall by abuser type: ${Object.entries(M.abuse.by_group).map(([k,v])=>`${k.replace(/_/g," ")} <b class="${v.combined_recall<0.5?"badc":""}">${pc(v.combined_recall,0)}</b> (n=${v.n})`).join(" · ")}</div><div class="small mute">False-positive payout rate ${pc(M.abuse.false_positive_payout_rate,1)} · ring value held ${usd0(M.abuse.ring_value_held_usd)} · auto-settled to rings ${usd0(M.abuse.ring_value_auto_settled_usd)}. Points converted: ${Math.round(M.breakage.points_converted/1000)}k (${pc(M.breakage.unwanted_conversion_rate,0)} would have redeemed anyway).</div></div>
+  </div>`;
+}
+async function tInc(p){
+  const M=await api('/ops/metrics'),I=M.models.incidents;
+  p.innerHTML=`<div class="grid">${I.discovered.map(d=>`<div class="card"><div class="big-inc">Incident discovered: <b>${d.affected_customers}</b> affected customers, <b>${d.complained}</b> complained, <b>${d.silent_victims}</b> silent victims auto-credited.</div>
+   <dl class="kv" style="margin-top:10px"><dt>Cluster</dt><dd>${esc(d.id)} · ${esc(d.failure_type)}</dd><dt>Embedding</dt><dd>${esc(d.embed_backend)}</dd><dt>Matches planted</dt><dd>${esc(d.matches)} (order precision ${d.order_precision.toFixed(2)}, recall ${d.order_recall.toFixed(2)})</dd><dt>Credits written</dt><dd>${d.silent_credited}</dd></dl></div>`).join('')||'<div class="card">No incidents.</div>'}</div>
+   <p class="tiny mute" style="margin-top:12px">Found by clustering complaint embeddings + dates, then keeping only clusters that are statistically surprising against the base complaint rate. ${I.planted} incidents were planted; ${I.discovered.length} discovered.</p>`;
+}
+async function tContracts(p){
+  const rows=await api('/contracts');
+  p.innerHTML=`<div class="note" style="margin-bottom:12px">Edit params as JSON and save. “Save &amp; re-run” re-evaluates; existing entries are never double-paid (idempotent), so new settings affect new events.</div>
+  <div class="grid ge">${rows.map(r=>`<div class="card"><div class="row sp"><b>${r.id}</b><span class="small"><label><input type="checkbox" data-a="${r.id}" ${r.active?'checked':''}> active</label>${r.experimental?' <span class="chip syn">experimental</span>':''}</span></div>
+   <textarea data-p="${r.id}">${esc(JSON.stringify(r.params,null,1))}</textarea><div class="row" style="margin-top:6px"><button class="act" data-s="${r.id}">Save &amp; re-run</button><span class="small mute" id="m_${r.id}"></span></div></div>`).join('')}</div>`;
+  p.onclick=async e=>{const id=e.target.dataset.s;if(!id)return;const m=$('#m_'+id);try{const params=JSON.parse($(`textarea[data-p="${id}"]`).value);
+    await api('/contracts/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({params,active:$(`input[data-a="${id}"]`).checked})});m.textContent='Saved. Re-running…';
+    const r=await post('/run');m.textContent=`Saved. ${r.inserted} new entries.`}catch(x){m.textContent='Error: '+x.message}};
+}
+async function tOlist(p){
+  const M=await api('/ops/olist'),c=M.late_contract,R=M.repeat_effect,E=M.economics,F=M.silent_failure,T=M.text_model;
+  p.innerHTML=`<div class="note" style="margin-bottom:14px"><b>REAL data</b>: ${esc(M.dataset)} Not synthetic. Cannot test: ${esc(M.cannot_be_tested)}.</div>
+  <div class="grid g4" style="margin-bottom:14px">${kpi(pc(c.late_rate),`of ${c.delivered.toLocaleString()} delivered orders were late (median ${c.median_days_late.toFixed(1)} days)`)}
+   ${kpi('R$ '+Math.round(c.total_credit_brl).toLocaleString(),`to auto-credit all ${c.late.toLocaleString()} late orders (${pc(c.credit_pct_of_gmv,2)} of sales)`)}
+   ${kpi(pc(c.silent.share_no_low_review,0),'of late customers left NO low review: silent victims a claim-based system would miss','badc')}
+   ${kpi((R.adjusted_effect_pp>=0?'+':'')+R.adjusted_effect_pp.toFixed(2)+' pp','effect of a late first order on 180-day repeat purchase (95% CI '+R.ci95_pp.map(x=>x.toFixed(1)).join(' to ')+')')}</div>
+  <div class="grid ge">
+   <div class="card"><h2>Review score by delivery delay</h2>${barChart(M.review_effect.by_delay.map(b=>({l:b.bucket.replace(' late','').replace('7d+ early','early+'),v:b.mean_score,c:b.mean_score<3?'var(--c2)':'var(--c1)'})),{yfmt:y=>y.toFixed(1),min:0})}
+     <div class="small mute">Lateness is a strong, real driver of unhappiness: ${M.review_effect.late_vs_ontime_score_gap.toFixed(1)} points lower on average when late.</div></div>
+   <div class="card"><h2>Does lateness cost repeat purchases?</h2><table><tr><td>Repeat rate, on-time first order</td><td>${pc(R.repeat_rate_on_time,2)}</td></tr><tr><td>Repeat rate, late first order</td><td>${pc(R.repeat_rate_late,2)}</td></tr><tr><td>Adjusted effect (IPW)</td><td>${R.adjusted_effect_pp.toFixed(2)} pp [${R.ci95_pp.map(x=>x.toFixed(2)).join(', ')}]</td></tr><tr><td>Significant?</td><td class="${R.significant?'good':'badc'}">${R.significant?'yes':'NO'}</td></tr><tr><td>Customers / late</td><td>${R.n_customers.toLocaleString()} / ${R.n_late.toLocaleString()}</td></tr></table>
+     <div class="small mute">${esc(R.design)}</div></div>
+   <div class="card"><h2>Economics: can retention pay for the credit?</h2><table><tr><td>Average order</td><td>R$ ${E.avg_order_brl.toFixed(0)}</td></tr><tr><td>Mean credit per late order</td><td>R$ ${E.mean_credit_per_late_order_brl.toFixed(2)}</td></tr><tr><td>Max retention benefit per late order</td><td>R$ ${E.retention_benefit_per_late_order_brl.toFixed(2)}</td></tr><tr><td>Covered by retention</td><td class="badc"><b>${pc(E.credit_covered_by_retention_ratio,1)}</b></td></tr></table>
+     <div class="small mute">${esc(E.reading)}</div></div>
+   <div class="card"><h2>Delay spikes found in real data</h2><table><tr><th>Window</th><th>Late rate</th><th>Customers</th><th>Silent</th></tr>${M.spikes.slice(0,5).map(s=>`<tr><td>${s.start} → ${s.end}${s.matches_known_event?`<div class="tiny good">${esc(s.matches_known_event)}</div>`:'<div class="tiny mute">unexplained</div>'}</td><td>${pc(s.late_rate,0)} <span class="tiny mute">(base ${pc(s.baseline,0)})</span></td><td>${s.customers}</td><td>${s.silent_victims}</td></tr>`).join('')}</table>
+     <div class="small mute">Poisson test vs a 91-day rolling median. Two known real events are recovered without being told about them. Seller-week bad-review spikes: ${M.seller_incidents.flagged} flagged of ${M.seller_incidents.tested.toLocaleString()} tested (${M.seller_incidents.expected_false.toFixed(2)} expected by chance).</div></div>
+   <div class="card"><h2>Silent-failure detector (real labels)</h2><table><tr><td>Task</td><td class="small">${esc(F.task)}</td></tr><tr><td>AUC (temporal test)</td><td>${F.auc.toFixed(3)}</td></tr><tr><td>Top-10% precision / lift</td><td>${pc(F.top10pct_precision,0)} / ${F.lift_top10pct.toFixed(1)}x (base ${pc(F.base_rate_test,1)})</td></tr><tr><td>Brier raw → calibrated</td><td>${F.brier_raw.toFixed(4)} → ${F.brier_calibrated.toFixed(4)}</td></tr></table>
+     ${lineChart([{name:'observed',pts:F.reliability.map(r=>[r.mean_pred,r.observed])},{name:'perfect',pts:[[0,0],[Math.max(...F.reliability.map(r=>r.mean_pred)),Math.max(...F.reliability.map(r=>r.mean_pred))]],dash:1}],{xl:'predicted probability',xfmt:x=>x.toFixed(2),yfmt:y=>y.toFixed(2)})}
+     <div class="small mute">Weak but real signal; over-predicts slightly after the time shift. Top drivers: ${F.permutation_importance.slice(0,3).map(f=>f.feature).join(', ')}.</div></div>
+   <div class="card"><h2>Review text (Portuguese)</h2><table><tr><td>Predict bad review from text, AUC</td><td>${T.auc_bad_review_from_text.toFixed(3)}</td></tr>${Object.entries(T.bad_review_themes).map(([k,v])=>`<tr><td>Bad reviews mentioning: ${k.replace('_',' ')}</td><td>${pc(v,0)}</td></tr>`).join('')}<tr><td>Late low-reviews that mention delay</td><td>${pc(T.share_of_late_low_reviews_mentioning_delay,0)}</td></tr></table>
+     <div class="small mute">Top bad-review terms: ${T.top_bad_terms.slice(0,8).map(esc).join(', ')}. ${esc(T.note)}.</div></div>
+  </div>
+  <div class="card" style="margin-top:14px"><h2>Sample: orders the late-delivery contract would credit</h2><table><tr><th>Order</th><th>Days late</th><th>Order value</th><th>Credit</th><th>Left a low review?</th></tr>${c.sample.map(s=>`<tr><td>${s.order}…</td><td>${s.delay_days}</td><td>R$ ${s.amount}</td><td>R$ ${s.credit}</td><td>${s.wrote_low_review?'yes':'<b>no (silent)</b>'}</td></tr>`).join('')}</table></div>`;
+}
+async function tDunn(p){
+  const M=await api('/ops/dunnhumby'),O=M.overview,P=M.price_protection,C=M.campaigns,m=C.pooled,u=C.unmatched;
+  const ci=a=>`[${a.map(x=>x.toFixed(1)).join(', ')}]`;
+  p.innerHTML=`<div class="note" style="margin-bottom:14px"><b>REAL data</b>: ${esc(M.dataset)} Not synthetic. Cannot test: ${esc(M.cannot_be_tested)}.</div>
+  <div class="grid g4" style="margin-bottom:14px">${kpi(O.households.toLocaleString(),`households, ${O.basket_lines.toLocaleString()} basket lines, ${O.weeks} weeks`)}
+   ${kpi(pc(P.refund_pct_of_sales,1),'of sales would be refunded by a 14-day price-protection promise','badc')}
+   ${kpi(pc(P.share_households_affected,0),`of households would get at least one refund (about $${P.refund_per_household_per_year.toFixed(0)} per household per year)`)}
+   ${kpi(pc(P.share_lines_with_drop,1),'of purchase lines saw the same product cheaper in that store within 14 days')}</div>
+  <div class="grid ge">
+   <div class="card"><h2>Price protection on real prices</h2><table><tr><td>Lines with a later drop</td><td>${P.lines_with_drop.toLocaleString()} of ${P.purchase_lines.toLocaleString()}</td></tr><tr><td>Total refund liability</td><td>$${Math.round(P.total_refund).toLocaleString()}</td></tr><tr><td>Mean / median refund per affected line</td><td>$${P.mean_refund_per_affected_line.toFixed(2)} / $${P.median_refund_per_affected_line.toFixed(2)}</td></tr><tr><td>Mean size of the drop</td><td>${pc(P.mean_drop_pct_when_hit,0)}</td></tr></table>
+     <div class="small mute">${esc(P.note)} Takeaway: in grocery, a blanket price-protection promise is expensive because promotions are constant (${pc(O.share_sales_discounted,0)} of lines carry a discount). It needs exclusions or caps.</div></div>
+   <div class="card"><h2>Do targeted coupon campaigns change behaviour?</h2><table><tr><th></th><th>Matched on past spend</th><th>Not matched</th></tr>
+     <tr><td>Extra spend per targeted household</td><td><b>$${m.incremental_spend_per_targeted_household.toFixed(1)}</b> ${ci(m.ci95_spend)}</td><td>$${u.incremental_spend_per_targeted_household.toFixed(1)} ${ci(u.ci95_spend)}</td></tr>
+     <tr><td>Still shopping 8 weeks later</td><td>${(m.change_in_share_active_after*100).toFixed(1)} pp ${ci(m.ci95_active.map(x=>x*100))}</td><td>${(u.change_in_share_active_after*100).toFixed(1)} pp</td></tr>
+     <tr><td>Coupon cost per household</td><td>$${m.coupon_cost_per_targeted_household.toFixed(2)}</td><td></td></tr>
+     <tr><td>Net margin per household (25% margin, assumed)</td><td class="${m.net_margin_per_targeted_household>=0?'good':'badc'}"><b>$${m.net_margin_per_targeted_household.toFixed(2)}</b> ${ci(m.ci95_net)}</td><td>$${u.net_margin_per_targeted_household.toFixed(2)}</td></tr></table>
+     <div class="small mute"><b class="badc">The sign flips with the adjustment.</b> ${esc(u.reading)} ${esc(C.design)} ${C.campaigns_analysed} campaigns.</div></div>
+  </div>`;
+}
+async function tTwcs(p){
+  const M=await api('/ops/twcs'),O=M.overview,E=M.effort,S=M.spikes;
+  p.innerHTML=`<div class="note" style="margin-bottom:14px"><b>REAL data</b>: ${esc(M.dataset)} Not synthetic. Cannot test: ${esc(M.cannot_be_tested)}.</div>
+  <div class="grid g4" style="margin-bottom:14px">${kpi(O.customer_threads.toLocaleString(),`customer complaints to ${O.brands} brands (${O.customers.toLocaleString()} customers)`)}
+   ${kpi(E.median_reply_min.toFixed(0)+' min',`median wait for a reply (90th percentile ${(E.p90_reply_min/60).toFixed(1)} h)`)}
+   ${kpi(pc(E.share_threads_3plus_customer_msgs,0),'of complaints needed 3+ messages from the customer (repeating themselves)','badc')}
+   ${kpi(pc(E.recontact_7d,1),'of customers came back to the same brand within 7 days')}</div>
+  <div class="grid ge">
+   <div class="card"><h2>Incidents discovered from volume spikes</h2><table><tr><th>Brand · window</th><th>Tweets</th><th>What changed (contrast terms)</th></tr>${S.incidents.slice(0,6).map(i=>`<tr><td>${esc(i.brand)}<div class="tiny mute">${i.start} → ${i.end} · ${i.peak_x_baseline.toFixed(1)}× normal</div></td><td>${i.tweets.toLocaleString()}<div class="tiny mute">${i.customers.toLocaleString()} customers</div></td><td class="small">${i.top_terms.slice(0,5).map(esc).join(', ')}<div class="tiny mute">${esc(i.example)}</div></td></tr>`).join('')}</table>
+     <div class="small mute">${S.found} brand-day spikes found out of ${S.brand_days_tested.toLocaleString()} tested (about ${S.expected_false.toExponential(0)} expected by chance). These are real events (game-server errors at launch, parcel delays in peak season, train cancellations), found without being told.</div></div>
+   <div class="card"><h2>Reply rate by brand</h2><table><tr><th>Lowest</th><th>Reply rate</th><th>Highest</th><th>Reply rate</th></tr>${M.worst_reply_rate.slice(0,5).map((w,i)=>{const b=M.best_reply_rate[i];return `<tr><td>${esc(w.brand)}</td><td>${pc(w.reply_rate,0)}</td><td>${b?esc(b.brand):''}</td><td>${b?pc(b.reply_rate,0):''}</td></tr>`}).join('')}</table>
+     <div class="small mute">Caution: the dataset is built from conversations, so unanswered tweets are under-represented (only ${pc(E.no_reply_share,0)} unanswered here). Real-world non-response is higher.</div></div>
+   <div class="card"><h2>What customers complain about</h2><table>${Object.entries(M.themes).map(([k,v])=>`<tr><td>${k.replace(/_/g,' ')}</td><td>${pc(v,1)}</td></tr>`).join('')}</table><div class="small mute">Keyword lexicon over all complaint tweets (no labels exist).</div></div>
+   <div class="card"><h2>Does a slower reply make customers come back?</h2><table><tr><th>Wait for reply</th><th>Complaints</th><th>Came back in 7d</th><th>Customer messages</th></tr>${E.by_wait.map(w=>`<tr><td>${w.wait}</td><td>${w.n.toLocaleString()}</td><td>${pc(w.recontact_7d,1)}</td><td>${w.customer_msgs.toFixed(2)}</td></tr>`).join('')}</table>
+     <div class="small mute">Counter-intuitive: slower replies come with FEWER follow-ups. Customers who wait give up, and urgent issues get fast replies, so this is selection, not proof that waiting is fine.</div></div>
+  </div>`;
+}
+async function tModels(p){
+  const cs=await api('/ops/models');
+  p.innerHTML=`<div class="note" style="margin-bottom:12px">Model cards. Every number comes from SYNTHETIC data and an assumed response function. No model uses ground-truth columns as features (enforced by a test).</div>
+  <div class="grid ge">${cs.map(c=>`<div class="card"><div class="row sp"><b>${esc(c.name)}</b><span class="chip ${c.status.startsWith('ACTIVE')?'st-ok':'syn'}">${esc(c.status)}</span></div>
+   <p class="small" style="margin:6px 0">${esc(c.purpose)}</p>
+   <dl class="kv"><dt>Features</dt><dd>${esc(c.features)}</dd><dt>Fallback</dt><dd>${esc(c.fallback)}</dd>${Object.entries(c.metrics).map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(typeof v==='object'?JSON.stringify(v):v)}</dd>`).join('')}</dl>
+   <details open><summary>Known limitations</summary><ul>${c.limits.map(l=>`<li>${esc(l)}</li>`).join('')}</ul></details></div>`).join('')}</div>`;
+}
+
+/* ---------------- shell ---------------- */
+$('#views').onclick=e=>{const v=e.target.dataset.v;if(!v)return;S.view=v;$$('#views button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===v));go()};
+$('#theme').onclick=()=>{const d=document.documentElement,dark=matchMedia('(prefers-color-scheme: dark)').matches,cur=d.dataset.theme||(dark?'dark':'light');d.dataset.theme=cur==='dark'?'light':'dark';go()};
+function go(){(S.view==='cust'?viewCust:viewOps)().catch(e=>{$('#main').innerHTML=`<div class="note">${esc(e.message)}. Is the data seeded? Run <code>python run.py</code>.</div>`})}
+go();
+</script>
+</body>
+</html>

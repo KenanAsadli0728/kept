@@ -1,0 +1,47 @@
+# Promise-contract registry. Edit params here (or via PUT /contracts/{id}) - no code changes needed.
+# Loaded into the promise_contracts table by the seeder; the table is the runtime source of truth.
+contracts:
+  late_delivery:
+    active: true
+    experimental: false
+    params:
+      lookback_days: 45
+      min_credit: 0.25
+      # graduated bands (no single cliff edge): delay in minutes (lo, hi], pct of order, cap in USD
+      bands:
+        - {lo: 30,  hi: 60,   pct: 0.05, cap: 3.00}
+        - {lo: 60,  hi: 180,  pct: 0.08, cap: 4.00}
+        - {lo: 180, hi: 100000, pct: 0.10, cap: 5.00}
+  price_protection:
+    active: true
+    experimental: false
+    params: {window_days: 14, lookback_days: 45, min_refund: 0.50}
+  expiring_points:
+    active: true
+    experimental: false
+    params: {expiry_days: 7, min_balance: 500, min_p_not_redeem: 0.8, max_convert_usd: 10.0, extend_days: 90}   # convert up to $10, EXTEND the rest (cheap, avoids voiding)
+  unused_subscription:
+    active: true
+    experimental: true      # may trigger churn if framed as "you overpay": silent pause + prorated credit only
+    params: {unused_days: 60, proration_days: 90, credit_pct: 0.5}
+  devaluation_true_up:
+    active: true
+    experimental: false
+    params: {lookback_days: 45, max_restore_pct_of_balance: 0.5}
+  # --- detectors / system components (same table, editable the same way) ---
+  silent_failure:
+    active: true
+    experimental: false
+    params: {lookback_days: 45, threshold: 0.5, credit_pct: 0.15, credit_cap: 8.00}
+  incident:
+    active: true
+    experimental: false
+    params: {min_complaints: 4, max_p_value: 0.0001, credit_pct: 0.25, credit_cap: 15.00, lookback_days: 45}
+  settlement_policy:
+    active: true
+    experimental: false
+    params: {holdout_pct: 0.10, notice_delay_min: 120, notice_tracking_views: 3, topup_pct: 0.5, topup_cap: 2.00, budget_usd: 6000}
+  abuse_guard:
+    active: true
+    experimental: false
+    params: {max_claims_30d: 4, max_payout_30d: 40.0, review_payout_usd: 50.0, min_component_size: 4, ring_score_threshold: 1.0, anomaly_contamination: 0.02}
