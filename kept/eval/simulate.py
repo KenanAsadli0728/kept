@@ -285,7 +285,7 @@ def model_eval(eng, t, models, gtk, gto, gtp, col, ab, truth, L):
         nlp_res["llm"] = dict(n=len(smp), valid_json_rate=float(np.mean([s == "llm" for s in used])),
                               macro_f1=float(f1_score(labels.reindex(smp.index), [e.failure_type for e, _ in outs], average="macro")))
     else:
-        nlp_res["llm"] = dict(available=False, reason="OVL_LLM=1 and ANTHROPIC_API_KEY not set - the TF-IDF baseline is the live path")
+        nlp_res["llm"] = dict(available=False, reason="KEPT_LLM=1 and ANTHROPIC_API_KEY not set - the TF-IDF baseline is the live path")
     out["nlp"] = nlp_res
     # --- incidents ---
     truth_v = gto[gto.incident_id.notna()]

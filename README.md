@@ -15,7 +15,7 @@ python run.py            # seed -> train -> detect+settle -> simulate -> serve  
 `make run` does the same; `make test` runs the 88 tests; `docker compose up` works too.
 Options: `python run.py --no-serve`, `--port 9000`, `--wedge` (only the contracts the economics support). Everything is local and offline. No API key needed.
 
-Optional extras (the demo runs without them): `OVL_LLM=1` + `ANTHROPIC_API_KEY` (and `pip install anthropic`) enables LLM complaint extraction and LLM-phrased notes. `OVL_EMBED=st` uses sentence-transformers MiniLM embeddings.
+Optional extras (the demo runs without them): `KEPT_LLM=1` + `ANTHROPIC_API_KEY` (and `pip install anthropic`) enables LLM complaint extraction and LLM-phrased notes. `KEPT_EMBED=st` uses sentence-transformers MiniLM embeddings.
 
 ## Run it as an app
 
@@ -95,7 +95,7 @@ flowchart LR
   L --> SIM --> UI
 ```
 
-Layout: `ovl/contracts` (pure functions), `ovl/detector` (NLP, incidents, silent failure, points), `ovl/abuse`, `ovl/policy` (settlement, uplift, optimizer, notes), `ovl/eval` (training, hidden response, simulation, model cards), `ovl/api.py`, `ovl/static/index.html`, `tests/`.
+Layout: `kept/contracts` (pure functions), `kept/detector` (NLP, incidents, silent failure, points), `kept/abuse`, `kept/policy` (settlement, uplift, optimizer, notes), `kept/eval` (training, hidden response, simulation, model cards), `kept/api.py`, `kept/static/index.html`, `tests/`.
 
 ## Results from the last run (synthetic, seed 42)
 
@@ -135,7 +135,7 @@ Read this as: with the redesigned contracts the ledger roughly pays for itself o
 
 ## Real data: Olist Brazilian e-commerce
 
-The demo above is synthetic. `python run.py` also analyses three **real** datasets if present (cached after the first run, `--refresh-real` recomputes). First, Olist: its CSVs go in `data/olist/` (download from Kaggle: `olistbr/brazilian-ecommerce`, licence CC BY-NC-SA 4.0, not redistributed here). Results are in the ops tab **Real data (Olist)** and `data/olist_metrics.json`. Standalone: `python -m ovl.olist.analyze` (~15 s).
+The demo above is synthetic. `python run.py` also analyses three **real** datasets if present (cached after the first run, `--refresh-real` recomputes). First, Olist: its CSVs go in `data/olist/` (download from Kaggle: `olistbr/brazilian-ecommerce`, licence CC BY-NC-SA 4.0, not redistributed here). Results are in the ops tab **Real data (Olist)** and `data/olist_metrics.json`. Standalone: `python -m kept.olist.analyze` (~15 s).
 
 Olist has real promised-vs-actual delivery dates, reviews (Portuguese) and repeat purchases. It has **no** price drops, points or subscriptions, and nobody was randomly given credits, so the uplift model and the effect of *paying* a credit cannot be tested on it. Amounts are BRL; the credit bands are my assumption.
 
@@ -153,7 +153,7 @@ Olist has real promised-vs-actual delivery dates, reviews (Portuguese) and repea
 
 ### Real data: Dunnhumby "The Complete Journey" (grocery)
 
-`data/dunnhumby/`, tabs **Real: Grocery**; `python -m ovl.realdata.dunnhumby` (~10 s). 2,500 households, 102 weeks, 2.6M basket lines, 30 targeted coupon campaigns, USD.
+`data/dunnhumby/`, tabs **Real: Grocery**; `python -m kept.realdata.dunnhumby` (~10 s). 2,500 households, 102 weeks, 2.6M basket lines, 30 targeted coupon campaigns, USD.
 
 | Finding | Result |
 |---|---|
@@ -164,7 +164,7 @@ So Dunnhumby gives the only real evidence in this project that *value given* may
 
 ### Real data: Customer Support on Twitter
 
-`data/twcs/`, tab **Real: Support**; `python -m ovl.realdata.twcs` (~1 minute; cached by `run.py` unless `--refresh-real`). 2.8M tweets, 310k customer complaints to 108 brands (mostly Oct-Dec 2017).
+`data/twcs/`, tab **Real: Support**; `python -m kept.realdata.twcs` (~1 minute; cached by `run.py` unless `--refresh-real`). 2.8M tweets, 310k customer complaints to 108 brands (mostly Oct-Dec 2017).
 
 | Finding | Result |
 |---|---|

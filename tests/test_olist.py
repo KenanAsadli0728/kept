@@ -1,6 +1,6 @@
 import pytest
-from ovl import config
-from ovl.olist import analyze
+from kept import config
+from kept.olist import analyze
 
 REAL = config.ROOT / "data" / "olist" / "olist_orders_dataset.csv"
 DAY = 1440.0

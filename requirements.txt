@@ -11,6 +11,6 @@ joblib>=1.3
 pytest>=8.0
 httpx>=0.27
 # optional (the demo runs without them):
-# anthropic            -> LLM extraction + LLM-phrased notes (set OVL_LLM=1 and ANTHROPIC_API_KEY)
-# sentence-transformers -> MiniLM embeddings (set OVL_EMBED=st)
+# anthropic            -> LLM extraction + LLM-phrased notes (set KEPT_LLM=1 and ANTHROPIC_API_KEY)
+# sentence-transformers -> MiniLM embeddings (set KEPT_EMBED=st)
 # shap                 -> richer per-entry reasons

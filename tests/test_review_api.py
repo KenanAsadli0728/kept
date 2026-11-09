@@ -2,7 +2,7 @@ from fastapi.testclient import TestClient
 
 
 def client(world):
-    from ovl.api import app
+    from kept.api import app
     return TestClient(app)
 
 
@@ -53,7 +53,7 @@ def test_contract_edit_roundtrip(world):
 
 
 def test_overview_and_models_endpoints(world):
-    from ovl.eval import simulate
+    from kept.eval import simulate
     simulate.compute_metrics(world["eng"], models=world["models"])
     c = client(world)
     o = c.get("/ops/overview").json()

@@ -39,14 +39,14 @@ def ts(t):
     return t.strftime(FMT)
 
 
-# ---------------- optional access PIN (OVL_PIN / python run.py --pin 1234) ----------------
+# ---------------- optional access PIN (KEPT_PIN / python run.py --pin 1234) ----------------
 # OFF by default. When the server is shared on a network anyone who opens it could approve/deny entries, so a PIN is advisable.
 # This is a casual demo gate, not real authentication: no accounts, no rate limiting, plain HTTP on the LAN.
 PUBLIC_PATHS = ("/manifest.webmanifest", "/sw.js", "/health")
 
 
 def _pin_token(pin: str) -> str:
-    return hashlib.sha256(("ovl-demo-gate:" + pin).encode()).hexdigest()
+    return hashlib.sha256(("kept-demo-gate:" + pin).encode()).hexdigest()
 
 
 PIN_PAGE = """<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Kept</title>
@@ -59,19 +59,19 @@ PIN_PAGE = """<!doctype html><meta charset=utf-8><meta name=viewport content="wi
 
 @app.middleware("http")
 async def pin_gate(request, call_next):
-    pin = os.environ.get("OVL_PIN", "")
+    pin = os.environ.get("KEPT_PIN", "")
     path = request.url.path
     if not pin or path in PUBLIC_PATHS or path.startswith("/icons/"):
         return await call_next(request)
     tok = _pin_token(pin)
-    if hmac.compare_digest(request.cookies.get("ovl_pin", ""), tok):
+    if hmac.compare_digest(request.cookies.get("kept_pin", ""), tok):
         return await call_next(request)
     given = request.query_params.get("pin")
     if given is not None and hmac.compare_digest(_pin_token(given), tok):
         from urllib.parse import urlencode
         rest = [(k, v) for k, v in request.query_params.multi_items() if k != "pin"]
         resp = RedirectResponse(path + ("?" + urlencode(rest) if rest else ""), status_code=303)
-        resp.set_cookie("ovl_pin", tok, httponly=True, samesite="lax", max_age=7 * 86400)
+        resp.set_cookie("kept_pin", tok, httponly=True, samesite="lax", max_age=7 * 86400)
         return resp
     if "text/html" in request.headers.get("accept", ""):
         return HTMLResponse(PIN_PAGE % ('<p style="color:#f0837c;margin:0 0 10px">Wrong PIN.</p>' if given is not None else ""), status_code=401)
@@ -95,10 +95,10 @@ def _lan_ips():
 @app.get("/ops/share")
 def share_info(request: Request):
     port = request.url.port or 8000
-    shared = os.environ.get("OVL_SHARE") == "1"
+    shared = os.environ.get("KEPT_SHARE") == "1"
     urls = [f"http://{ip}:{port}" for ip in _lan_ips()] if shared else []
     host = socket.gethostname()
-    return dict(shared=shared, urls=urls, hostname_url=f"http://{host}.local:{port}" if shared else None, pin_enabled=bool(os.environ.get("OVL_PIN")),
+    return dict(shared=shared, urls=urls, hostname_url=f"http://{host}.local:{port}" if shared else None, pin_enabled=bool(os.environ.get("KEPT_PIN")),
                 note=("Open one of these on a phone connected to the SAME Wi-Fi." if shared else "Start the server with `python run.py --share` to let other devices connect."),
                 https_note="Installing as an app on a phone needs HTTPS; over plain http the page works fine in the phone browser.")
 
@@ -371,15 +371,15 @@ def metrics():
 def olist():
     from .olist import analyze
     if not analyze.OUT.exists():
-        raise HTTPException(404, "Real-data analysis not run: put the Olist CSVs in data/olist/ and run `python -m ovl.olist.analyze`")
+        raise HTTPException(404, "Real-data analysis not run: put the Olist CSVs in data/olist/ and run `python -m kept.olist.analyze`")
     return json.loads(analyze.OUT.read_text(encoding="utf8"))
 
 
 def _real(name):
     import importlib
-    mod = importlib.import_module(f"ovl.realdata.{name}")
+    mod = importlib.import_module(f"kept.realdata.{name}")
     if not mod.OUT.exists():
-        raise HTTPException(404, f"{name} analysis not run: place the data under data/ and run `python -m ovl.realdata.{name}`")
+        raise HTTPException(404, f"{name} analysis not run: place the data under data/ and run `python -m kept.realdata.{name}`")
     return json.loads(mod.OUT.read_text(encoding="utf8"))
 
 

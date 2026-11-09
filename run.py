@@ -13,8 +13,8 @@ warnings.filterwarnings("ignore")
 
 
 def build(verbose=True, wedge=False, refresh_real=False):
-    from ovl import db, engine, seed
-    from ovl.eval import simulate, training
+    from kept import db, engine, seed
+    from kept.eval import simulate, training
     t0 = time.time()
 
     def step(name):
@@ -32,8 +32,8 @@ def build(verbose=True, wedge=False, refresh_real=False):
     step(f"  {r['inserted']} ledger entries written")
     step("simulating 90 days post-settlement + computing metrics")
     simulate.compute_metrics(eng)
-    from ovl.olist import analyze as olist
-    from ovl.realdata import dunnhumby, twcs
+    from kept.olist import analyze as olist
+    from kept.realdata import dunnhumby, twcs
     for name, mod in (("Olist (late delivery, silent failures, repeat purchase)", olist), ("Dunnhumby (price protection, coupon campaigns)", dunnhumby),
                       ("Twitter support (effort, incidents)", twcs)):
         if not mod.available():
@@ -66,7 +66,7 @@ def open_when_ready(url, as_app):
 
 
 def have_data():
-    from ovl import config
+    from kept import config
     return config.DB_PATH.exists() and (config.MODELS_DIR / "bundle.joblib").exists() and config.METRICS_PATH.exists()
 
 
@@ -78,7 +78,7 @@ if __name__ == "__main__":
     ap.add_argument("--port", type=int, default=int(os.environ.get("PORT", 8000)))
     ap.add_argument("--serve-only", action="store_true", help="skip the build when data already exists (keeps your ledger state)")
     ap.add_argument("--share", action="store_true", help="let phones/other computers on your Wi-Fi open the app (binds 0.0.0.0 and prints the address)")
-    ap.add_argument("--pin", default=os.environ.get("OVL_PIN", ""), help="require this access PIN (recommended with --share)")
+    ap.add_argument("--pin", default=os.environ.get("KEPT_PIN", ""), help="require this access PIN (recommended with --share)")
     ap.add_argument("--open", action="store_true", help="open the app in your browser when ready")
     ap.add_argument("--app", action="store_true", help="open it in an app window (Edge/Chrome --app mode)")
     ap.add_argument("--host-all", action="store_true", help="bind 0.0.0.0 (Docker)")
@@ -92,11 +92,11 @@ if __name__ == "__main__":
             open_when_ready(f"http://127.0.0.1:{a.port}", as_app=a.app)
         import uvicorn
         if a.pin:
-            os.environ["OVL_PIN"] = a.pin
+            os.environ["KEPT_PIN"] = a.pin
         if a.share or a.host_all:
-            os.environ["OVL_SHARE"] = "1"
+            os.environ["KEPT_SHARE"] = "1"
             a.host_all = True
-            from ovl.api import _lan_ips
+            from kept.api import _lan_ips
             import socket
             print("\nShared on your network. On a phone connected to the SAME Wi-Fi open:", flush=True)
             for n, ip in enumerate(_lan_ips()):
@@ -105,4 +105,4 @@ if __name__ == "__main__":
             print("   PIN protection: " + ("ON (enter the PIN on the phone)" if a.pin else "OFF - anyone on this network can use it; add --pin 1234"), flush=True)
             print("   First time: allow Python through Windows Firewall for PRIVATE networks when Windows asks.", flush=True)
         print(f"\nKept -> http://{'0.0.0.0' if a.host_all else '127.0.0.1'}:{a.port}   (API docs: /docs)\n", flush=True)
-        uvicorn.run("ovl.api:app", host="0.0.0.0" if a.host_all else "127.0.0.1", port=a.port, log_level="warning")
+        uvicorn.run("kept.api:app", host="0.0.0.0" if a.host_all else "127.0.0.1", port=a.port, log_level="warning")

@@ -5,7 +5,7 @@ import struct
 import zlib
 from pathlib import Path
 
-OUT = Path(__file__).resolve().parent.parent / "ovl" / "static" / "icons"
+OUT = Path(__file__).resolve().parent.parent / "kept" / "static" / "icons"
 TEAL = (15, 107, 92)
 WHITE = (255, 255, 255)
 

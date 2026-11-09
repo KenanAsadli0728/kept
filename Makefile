@@ -12,4 +12,4 @@ test:
 	$(PY) -m pytest tests -q
 
 clean:
-	rm -rf data/ovl.db data/models data/metrics.json
+	rm -rf data/kept.db data/models data/metrics.json

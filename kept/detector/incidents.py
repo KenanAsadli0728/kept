@@ -1,7 +1,7 @@
 """Embedding-based incident discovery.
 
 1. Keep complaints that describe a failure (per the NLP classifier; 'other'/'price'/'refund_status' are not incidents).
-2. Embed text (sentence-transformers MiniLM if OVL_EMBED=st and available, else TF-IDF + SVD).
+2. Embed text (sentence-transformers MiniLM if KEPT_EMBED=st and available, else TF-IDF + SVD).
 3. DBSCAN over [text embedding, scaled order date] -> clusters = candidate incidents (no predefined label).
 4. Validate each cluster against operations: complaints must concentrate in one (warehouse|carrier, date) group.
 5. A candidate must be statistically surprising (Poisson tail vs the base complaint rate, Bonferroni-strict).

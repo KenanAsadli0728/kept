@@ -5,11 +5,11 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-STATIC = Path(__file__).resolve().parent.parent / "ovl" / "static"
+STATIC = Path(__file__).resolve().parent.parent / "kept" / "static"
 
 
 def client():
-    from ovl.api import app
+    from kept.api import app
     return TestClient(app)
 
 

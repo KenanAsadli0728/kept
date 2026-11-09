@@ -41,7 +41,7 @@ def build_cards(M):
              metrics={"LLM macro-F1": ("n/a (not run offline)" if not nlp.get("llm", {}).get("macro_f1") else f(nlp["llm"]["macro_f1"])),
                       "Baseline macro-F1": f(nlp.get("baseline_macro_f1")), "Baseline accuracy": f(nlp.get("baseline_accuracy"))},
              limits=[SYN, "Template-generated complaints (with mixed wording and hard negatives) are still easier than real tickets.",
-                     f"Tickets without an order reference are linked by a recency rule: {f(nlp.get('order_link_inference', {}).get('accuracy'), 2)} accurate on {nlp.get('order_link_inference', {}).get('n_inferred')} tickets.", "LLM path needs OVL_LLM=1 + ANTHROPIC_API_KEY; untested without a key beyond mocked unit tests."]),
+                     f"Tickets without an order reference are linked by a recency rule: {f(nlp.get('order_link_inference', {}).get('accuracy'), 2)} accurate on {nlp.get('order_link_inference', {}).get('n_inferred')} tickets.", "LLM path needs KEPT_LLM=1 + ANTHROPIC_API_KEY; untested without a key beyond mocked unit tests."]),
         dict(name="Embedding incident discovery (DBSCAN)", purpose="Discover NEW incidents (no predefined label) by clustering complaint embeddings + date, then credit every affected order.",
              features="Complaint embedding (TF-IDF+SVD default, MiniLM optional), order date, warehouse/carrier of the linked order.", fallback="TF-IDF + SVD when sentence-transformers is not configured.",
              status="ACTIVE", metrics={"Planted incidents": inc.get("planted"), "Discovered": len(inc.get("discovered", [])),

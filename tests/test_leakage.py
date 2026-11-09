@@ -2,10 +2,10 @@
 import ast
 from pathlib import Path
 import pandas as pd
-from ovl.detector import silent_failure as sf, redemption as rd
-from ovl.policy import uplift, optimizer
+from kept.detector import silent_failure as sf, redemption as rd
+from kept.policy import uplift, optimizer
 
-ROOT = Path(__file__).resolve().parent.parent / "ovl"
+ROOT = Path(__file__).resolve().parent.parent / "kept"
 ALLOWED_FILES = {"seed.py"}            # generates the truth
 ALLOWED_DIRS = {"eval"}                # labels / hidden response / metrics (evaluation only)
 
@@ -39,7 +39,7 @@ def test_feature_lists_exclude_ground_truth_columns(world):
 
 
 def test_detector_feature_matrix_has_only_declared_columns(world):
-    from ovl import data
+    from kept import data
     t = data.load_tables(world["eng"])
     X = sf.build_features(t["orders"], t["contacts"])
     assert set(X.columns) == set(sf.FEATURES) | {"customer_id"}

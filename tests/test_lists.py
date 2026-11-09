@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 
 
 def client():
-    from ovl.api import app
+    from kept.api import app
     return TestClient(app)
 
 

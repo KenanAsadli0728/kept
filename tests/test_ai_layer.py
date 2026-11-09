@@ -2,9 +2,9 @@ import json
 import sys
 import pandas as pd
 import pytest
-from ovl import llm
-from ovl.detector import nlp, incidents
-from ovl.policy import notes, optimizer
+from kept import llm
+from kept.detector import nlp, incidents
+from kept.policy import notes, optimizer
 
 GOOD = json.dumps({"failure_type": "spoiled", "incident_key": {"warehouse": "W3", "carrier": None, "date": "Jan 03"}, "severity": 4, "customer_noticed": True})
 
@@ -67,7 +67,7 @@ def test_embedding_fallback_when_sentence_transformers_unavailable(monkeypatch):
 
 def test_expiring_points_fallback_converts_when_no_probability():
     from datetime import datetime, timedelta
-    from ovl.contracts import expiring_points
+    from kept.contracts import expiring_points
     now = datetime(2026, 1, 15, 12)
     d = dict(now=now, points=dict(balance=1800, expires_at=now + timedelta(days=3)), p_not_redeem=None, predicted_reward=None,
              chart_versions=[dict(effective_at=now, rewards={"Iced latte": (150, 4.5)})])

@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta
 import yaml
-from ovl import config
-from ovl.contracts import late_delivery, price_protection, expiring_points, unused_subscription, devaluation_true_up
-from ovl.contracts.late_delivery import band_credit
+from kept import config
+from kept.contracts import late_delivery, price_protection, expiring_points, unused_subscription, devaluation_true_up
+from kept.contracts.late_delivery import band_credit
 
 NOW = datetime(2026, 1, 15, 12)
 P = {k: v["params"] for k, v in yaml.safe_load(open(config.CONTRACTS_YAML))["contracts"].items()}

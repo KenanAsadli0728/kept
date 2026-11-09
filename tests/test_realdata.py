@@ -1,8 +1,8 @@
 import json
 import pandas as pd
 import pytest
-from ovl import config
-from ovl.realdata import dunnhumby, twcs
+from kept import config
+from kept.realdata import dunnhumby, twcs
 
 DUNN = config.ROOT / "data" / "dunnhumby" / "processed" / "transaction_data.parquet"
 
@@ -58,7 +58,7 @@ def test_twcs_results_schema_if_computed():
     real_out = config.ROOT / "data" / "twcs_metrics.json"
     monkeypatch_out = real_out
     if not real_out.exists():
-        pytest.skip("run `python -m ovl.realdata.twcs` first")
+        pytest.skip("run `python -m kept.realdata.twcs` first")
     M = json.loads(monkeypatch_out.read_text(encoding="utf8"))
     assert M["overview"]["customer_threads"] > 100000 and 0 <= M["effort"]["no_reply_share"] <= 1
     assert M["spikes"]["found"] >= 3 and all(i["top_terms"] for i in M["spikes"]["incidents"])

@@ -1,6 +1,6 @@
 """Ledger notes. Rule: settle in value, never in words.
 
-The LLM MAY phrase a note (OVL_LLM=1 + key). Every candidate passes `validate_note`; apology / promise language,
+The LLM MAY phrase a note (KEPT_LLM=1 + key). Every candidate passes `validate_note`; apology / promise language,
 or a missing/changed amount, is rejected and the deterministic template is used instead. Source is logged per entry,
 so the rejection rate is a metric.
 """

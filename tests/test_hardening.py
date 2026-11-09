@@ -1,6 +1,6 @@
 import pandas as pd
-from ovl import data
-from ovl.eval import simulate
+from kept import data
+from kept.eval import simulate
 
 
 def test_missing_order_links_are_inferred(world):
@@ -22,7 +22,7 @@ def test_points_conversion_is_capped_and_remainder_extended(world):
 
 
 def test_pipeline_does_not_reconvert_extended_points(world):
-    from ovl import engine
+    from kept import engine
     assert engine.run_pipeline(world["eng"], models=world["models"])["inserted"] == 0
 
 
