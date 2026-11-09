@@ -1,7 +1,7 @@
 /* Service worker: makes the app installable and gives it an offline shell.
    Safety rule: LIVE DATA IS NEVER CACHED. Every API path goes straight to the network, so the app can never show stale
    ledger numbers. Only the static shell (page, icons, manifest) is cached, network-first, as an offline fallback. */
-const CACHE = 'ovl-shell-v1';
+const CACHE = 'kept-shell-v2';
 const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/icon.svg'];
 const LIVE = /^\/(customers|ops|contracts|run|simulate|health|docs|redoc|openapi\.json)(\/|$|\?)/;
 

@@ -104,5 +104,5 @@ if __name__ == "__main__":
             print(f"   http://{socket.gethostname()}.local:{a.port}   (if the IP changes)", flush=True)
             print("   PIN protection: " + ("ON (enter the PIN on the phone)" if a.pin else "OFF - anyone on this network can use it; add --pin 1234"), flush=True)
             print("   First time: allow Python through Windows Firewall for PRIVATE networks when Windows asks.", flush=True)
-        print(f"\nOwed-Value Ledger -> http://{'0.0.0.0' if a.host_all else '127.0.0.1'}:{a.port}   (API docs: /docs)\n", flush=True)
+        print(f"\nKept -> http://{'0.0.0.0' if a.host_all else '127.0.0.1'}:{a.port}   (API docs: /docs)\n", flush=True)
         uvicorn.run("ovl.api:app", host="0.0.0.0" if a.host_all else "127.0.0.1", port=a.port, log_level="warning")

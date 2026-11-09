@@ -19,7 +19,7 @@ from .abuse import guard
 from .eval import cards as cards_mod
 from .policy import settlement as pol
 
-app = FastAPI(title="Owed-Value Ledger", description="What the BRAND owes the CUSTOMER, settled before they ask. SYNTHETIC DATA DEMO.", version="1.0")
+app = FastAPI(title="Kept", description="What the BRAND owes the CUSTOMER, settled before they ask. SYNTHETIC DATA DEMO.", version="1.0")
 eng = db.get_engine()
 NOW = config.NOW
 FMT = "%Y-%m-%d %H:%M:%S"
@@ -49,9 +49,9 @@ def _pin_token(pin: str) -> str:
     return hashlib.sha256(("ovl-demo-gate:" + pin).encode()).hexdigest()
 
 
-PIN_PAGE = """<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Owed-Value Ledger</title>
+PIN_PAGE = """<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Kept</title>
 <body style="font:16px system-ui;background:#14161a;color:#ecebe6;display:grid;place-items:center;min-height:100vh;margin:0">
-<form method=get style="background:#1d2025;padding:28px;border-radius:14px;width:min(340px,86vw)"><h2 style="margin:0 0 6px">Owed-Value Ledger</h2>
+<form method=get style="background:#1d2025;padding:28px;border-radius:14px;width:min(340px,86vw)"><h2 style="margin:0 0 6px">Kept</h2>
 <p style="color:#9aa0a6;margin:0 0 14px">Enter the access PIN to continue.</p>%s
 <input name=pin type=password inputmode=numeric autofocus placeholder=PIN style="width:100%%;box-sizing:border-box;padding:12px;border-radius:8px;border:1px solid #2c3036;background:#14161a;color:inherit;font:inherit">
 <button style="margin-top:12px;width:100%%;padding:12px;border:0;border-radius:8px;background:#3fb59f;color:#06211c;font:inherit;font-weight:600">Open</button></form></body>"""

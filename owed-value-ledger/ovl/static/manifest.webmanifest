@@ -1,6 +1,6 @@
 {
-  "name": "Owed-Value Ledger",
-  "short_name": "Ledger",
+  "name": "Kept",
+  "short_name": "Kept",
   "description": "What the brand owes the customer, paid before they ask.",
   "id": "/",
   "start_url": "/",

@@ -1,4 +1,4 @@
-# Owed-Value Ledger
+# Kept
 
 > Every loyalty program keeps a ledger of what customers owe the brand. This is the other half: **what the brand owes the customer, paid before they ask.**
 
@@ -30,7 +30,7 @@ Optional extras (the demo runs without them): `OVL_LLM=1` + `ANTHROPIC_API_KEY` 
 1. Connect the phone to the **same Wi-Fi** as the computer.
 2. On the computer double-click `share.bat` (or run `python run.py --serve-only --share --pin 1234 --open`). It prints the addresses, for example `http://192.168.131.44:8000`; try the one marked "try this first". The app's **Phone** button shows them too.
 3. Open that address in the phone browser and enter the PIN.
-4. The first time, Windows asks whether to allow Python through the firewall: tick **Private networks**. If it never asked, run once in an *administrator* terminal: `netsh advfirewall firewall add rule name="Owed-Value Ledger" dir=in action=allow protocol=TCP localport=8000 profile=private`.
+4. The first time, Windows asks whether to allow Python through the firewall: tick **Private networks**. If it never asked, run once in an *administrator* terminal: `netsh advfirewall firewall add rule name="Kept" dir=in action=allow protocol=TCP localport=8000 profile=private`.
 5. Keep the computer awake and plugged in while presenting (Windows sleep drops the connection).
 
 Things to know: `--pin` is a casual demo gate (shared PIN, plain HTTP, no accounts), not real security; without it anyone on the same network can approve or deny entries, so use it on any Wi-Fi you do not fully control. Over plain `http://` a phone can open and use the app, but **"Install app" needs HTTPS** (the install button only appears on localhost or HTTPS). For a true installed app on the phone, put the server behind an HTTPS tunnel or use Chrome's "Insecure origins treated as secure" flag for your computer's address. If the address changes between sessions, `http://<computer-name>.local:8000` often keeps working. Layout was checked with real 390 px mobile emulation: no horizontal overflow in the Customer, Operations, Review queue and Experiment views.

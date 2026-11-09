@@ -1,4 +1,4 @@
-# Owed-Value Ledger: pitch
+# Kept: pitch
 
 *Every loyalty program keeps a ledger of what customers owe the brand. We built the other half: what the brand owes the customer, paid before they ask.*
 
