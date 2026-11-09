@@ -1,0 +1,23 @@
+{
+  "name": "Owed-Value Ledger",
+  "short_name": "Ledger",
+  "description": "What the brand owes the customer, paid before they ask.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#14161a",
+  "theme_color": "#0f6b5c",
+  "categories": ["business", "finance"],
+  "icons": [
+    {"src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
+    {"src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any"}
+  ],
+  "shortcuts": [
+    {"name": "Customer view", "url": "/?view=cust", "icons": [{"src": "/icons/icon-192.png", "sizes": "192x192"}]},
+    {"name": "Ops view", "url": "/?view=ops", "icons": [{"src": "/icons/icon-192.png", "sizes": "192x192"}]}
+  ]
+}

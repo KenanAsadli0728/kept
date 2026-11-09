@@ -1,11 +1,15 @@
 """FastAPI app. OpenAPI docs at /docs. Serves the single-page UI at /."""
+import hashlib
+import hmac
 import json
+import os
+import socket
 from datetime import timedelta
 
 import pandas as pd
 import yaml
-from fastapi import FastAPI, HTTPException, Query
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sqlalchemy import text
@@ -33,6 +37,91 @@ def q_one(sql, **p):
 
 def ts(t):
     return t.strftime(FMT)
+
+
+# ---------------- optional access PIN (OVL_PIN / python run.py --pin 1234) ----------------
+# OFF by default. When the server is shared on a network anyone who opens it could approve/deny entries, so a PIN is advisable.
+# This is a casual demo gate, not real authentication: no accounts, no rate limiting, plain HTTP on the LAN.
+PUBLIC_PATHS = ("/manifest.webmanifest", "/sw.js", "/health")
+
+
+def _pin_token(pin: str) -> str:
+    return hashlib.sha256(("ovl-demo-gate:" + pin).encode()).hexdigest()
+
+
+PIN_PAGE = """<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Owed-Value Ledger</title>
+<body style="font:16px system-ui;background:#14161a;color:#ecebe6;display:grid;place-items:center;min-height:100vh;margin:0">
+<form method=get style="background:#1d2025;padding:28px;border-radius:14px;width:min(340px,86vw)"><h2 style="margin:0 0 6px">Owed-Value Ledger</h2>
+<p style="color:#9aa0a6;margin:0 0 14px">Enter the access PIN to continue.</p>%s
+<input name=pin type=password inputmode=numeric autofocus placeholder=PIN style="width:100%%;box-sizing:border-box;padding:12px;border-radius:8px;border:1px solid #2c3036;background:#14161a;color:inherit;font:inherit">
+<button style="margin-top:12px;width:100%%;padding:12px;border:0;border-radius:8px;background:#3fb59f;color:#06211c;font:inherit;font-weight:600">Open</button></form></body>"""
+
+
+@app.middleware("http")
+async def pin_gate(request, call_next):
+    pin = os.environ.get("OVL_PIN", "")
+    path = request.url.path
+    if not pin or path in PUBLIC_PATHS or path.startswith("/icons/"):
+        return await call_next(request)
+    tok = _pin_token(pin)
+    if hmac.compare_digest(request.cookies.get("ovl_pin", ""), tok):
+        return await call_next(request)
+    given = request.query_params.get("pin")
+    if given is not None and hmac.compare_digest(_pin_token(given), tok):
+        from urllib.parse import urlencode
+        rest = [(k, v) for k, v in request.query_params.multi_items() if k != "pin"]
+        resp = RedirectResponse(path + ("?" + urlencode(rest) if rest else ""), status_code=303)
+        resp.set_cookie("ovl_pin", tok, httponly=True, samesite="lax", max_age=7 * 86400)
+        return resp
+    if "text/html" in request.headers.get("accept", ""):
+        return HTMLResponse(PIN_PAGE % ('<p style="color:#f0837c;margin:0 0 10px">Wrong PIN.</p>' if given is not None else ""), status_code=401)
+    return JSONResponse({"detail": "PIN required"}, status_code=401)
+
+
+def _lan_ips():
+    ips = []
+    try:                                                    # the address used for the default route (no packet is actually sent)
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM); s.connect(("10.255.255.255", 1)); ips.append(s.getsockname()[0]); s.close()
+    except Exception:
+        pass
+    try:
+        for ai in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):
+            if ai[4][0] not in ips: ips.append(ai[4][0])
+    except Exception:
+        pass
+    return [i for i in ips if not i.startswith("127.") and not i.startswith("169.254.")]      # first = the address your router gave this PC
+
+
+@app.get("/ops/share")
+def share_info(request: Request):
+    port = request.url.port or 8000
+    shared = os.environ.get("OVL_SHARE") == "1"
+    urls = [f"http://{ip}:{port}" for ip in _lan_ips()] if shared else []
+    host = socket.gethostname()
+    return dict(shared=shared, urls=urls, hostname_url=f"http://{host}.local:{port}" if shared else None, pin_enabled=bool(os.environ.get("OVL_PIN")),
+                note=("Open one of these on a phone connected to the SAME Wi-Fi." if shared else "Start the server with `python run.py --share` to let other devices connect."),
+                https_note="Installing as an app on a phone needs HTTPS; over plain http the page works fine in the phone browser.")
+
+
+@app.get("/manifest.webmanifest", include_in_schema=False)
+def manifest():
+    return FileResponse(config.STATIC_DIR / "manifest.webmanifest", media_type="application/manifest+json")
+
+
+@app.get("/sw.js", include_in_schema=False)
+def service_worker():
+    # must be served from the root so its scope covers the whole app; never cached by the browser HTTP cache
+    return FileResponse(config.STATIC_DIR / "sw.js", media_type="application/javascript",
+                        headers={"Service-Worker-Allowed": "/", "Cache-Control": "no-cache"})
+
+
+@app.get("/icons/{name}", include_in_schema=False)
+def icon(name: str):
+    import re
+    path = config.STATIC_DIR / "icons" / name
+    if not re.fullmatch(r"[a-z0-9.\-]+", name) or not path.is_file():
+        raise HTTPException(404, "no such icon")
+    return FileResponse(path, headers={"Cache-Control": "public, max-age=86400"})
 
 
 @app.get("/", include_in_schema=False)
